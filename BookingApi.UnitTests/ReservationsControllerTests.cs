@@ -14,10 +14,7 @@ namespace Ploeh.Samples.BookingApi.UnitTests
         public void PostInvalidDto()
         {
             var dto = new ReservationDto { };
-            var validatorTD = new Mock<IValidator>();
-            validatorTD.Setup(v => v.Validate(dto)).Returns("Boo!");
             var sut = new ReservationsController(
-                validatorTD.Object,
                 new Mock<IMapper>().Object,
                 new Mock<IReservationsRepository>().Object,
                 10);
@@ -25,22 +22,20 @@ namespace Ploeh.Samples.BookingApi.UnitTests
             var actual = sut.Post(dto);
 
             var br = Assert.IsAssignableFrom<BadRequestObjectResult>(actual);
-            Assert.Equal("Boo!", br.Value);
+            Assert.Equal($"Invalid date: {dto.Date}.", br.Value);
         }
 
         [Fact]
         public void PostValidDtoWhenNoPriorReservationsExist()
         {
-            var dto = new ReservationDto { };
-            var r = new Reservation { };
-            var validatorTD = new Mock<IValidator>();
-            validatorTD.Setup(v => v.Validate(dto)).Returns("");
+            var dto = new ReservationDto { Date = "2020-01-01 12:00" };
+            var r = new Reservation { Date = new DateTime() };
             var mapperTD = new Mock<IMapper>();
             mapperTD.Setup(m => m.Map(dto)).Returns(r);
             var repositoryTD = new Mock<IReservationsRepository>();
+            repositoryTD.Setup(repo => repo.ReadReservations(r.Date)).Returns(new List<Reservation>());
             repositoryTD.Setup(repo => repo.Create(r)).Returns(1337);
             var sut = new ReservationsController(
-                validatorTD.Object,
                 mapperTD.Object,
                 repositoryTD.Object,
                 10);
@@ -54,16 +49,17 @@ namespace Ploeh.Samples.BookingApi.UnitTests
         [Fact]
         public void PostValidDtoWhenSoldOut()
         {
-            var dto = new ReservationDto { };
-            var r = new Reservation { Quantity = 2 };
-            var validatorTD = new Mock<IValidator>();
-            validatorTD.Setup(v => v.Validate(dto)).Returns("");
+
+            var dto = new ReservationDto { Date = "2020-01-01 12:00" };
+
+            var r = new Reservation { Date = new DateTime(), Quantity = 2 };
             var mapperTD = new Mock<IMapper>();
+            var repositoryTD = new Mock<IReservationsRepository>();
+            repositoryTD.Setup(repo => repo.ReadReservations(r.Date)).Returns(new List<Reservation>());
             mapperTD.Setup(m => m.Map(dto)).Returns(r);
             var sut = new ReservationsController(
-                validatorTD.Object,
                 mapperTD.Object,
-                new Mock<IReservationsRepository>().Object,
+                repositoryTD.Object,
                 1);
 
             var actual = sut.Post(dto);

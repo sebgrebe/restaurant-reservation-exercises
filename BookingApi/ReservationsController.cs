@@ -11,14 +11,14 @@ namespace Ploeh.Samples.BookingApi
     public class ReservationsController : ControllerBase
     {
         private readonly MaîtreD maîtreD;
+        private readonly Validator validator;
 
         public ReservationsController(
-            IValidator validator,
             IMapper mapper,
             IReservationsRepository repository,
             int capacity)
         {
-            Validator = validator;
+            Validator = new Validator();
             Mapper = mapper;
             Repository = repository;
             Capacity = capacity;
