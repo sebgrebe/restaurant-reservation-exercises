@@ -37,13 +37,16 @@ namespace Ploeh.Samples.BookingApi.UnitTests
             Assert.NotEmpty(repository);
         }
 
-        [Fact]
-        public void PostValidDtoWhenSoldOut()
+        [Theory]
+        [InlineData(1, 2)]
+        [InlineData(5, 7)]
+        [InlineData(10, 15)]
+        public void PostValidDtoWhenSoldOut(int capacity, int quantity)
         {
             var repository = new FakeReservationsRepository();
-            var sut = new ReservationsController(repository, 1);
+            var sut = new ReservationsController(repository, capacity);
 
-            var dto = new ReservationDto { Date = "2019-08-20", Quantity = 2 };
+            var dto = new ReservationDto { Date = "2019-08-20", Quantity = quantity};
             var actual = sut.Post(dto);
 
             var c = Assert.IsAssignableFrom<ObjectResult>(actual);
